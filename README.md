@@ -1,1 +1,6 @@
-# gal_template_project
+# UCL project for subject Graph Algorithms
+
+Simple navigation system based on OpenStreetMaps data 
+--
+
+
