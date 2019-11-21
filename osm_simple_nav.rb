@@ -36,7 +36,7 @@ class OSMSimpleNav
 		# read load command, input file and action command 
 		@load_cmd = ARGV.shift
 		unless @load_cmds_list.include?(@load_cmd)
-		  puts "Load command not registred!"
+		  puts "Load command not registered!"
 		  puts usage
 		  exit 1			
 		end
@@ -48,7 +48,7 @@ class OSMSimpleNav
 		end
 		@operation = ARGV.shift
 		unless @actions_list.include?(@operation)
-		  puts "Action command not registred!"
+		  puts "Action command not registered!"
 		  puts usage
 		  exit 1			
 		end
@@ -96,14 +96,11 @@ class OSMSimpleNav
 	    @highway_attributes = ['residential', 'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified']
 	    #@highway_attributes = ['residential']
 	    if file_type(@map_file) == "osm" or file_type(@map_file) == "xml" then
-	    	puts "OSM not supported!"
-	    	usage
-	    	exit 1
-	    	# load_graph
+	    	load_graph
 	    elsif file_type(@map_file) == "dot" or file_type(@map_file) == "gv" then
 	    	import_graph
 	    else
-	    	puts "Imput file type not recognized!"
+	    	puts "Input file type not recognized!"
 	    	usage
 	    end
 		
