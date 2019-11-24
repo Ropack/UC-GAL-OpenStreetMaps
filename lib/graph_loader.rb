@@ -76,7 +76,7 @@ class GraphLoader
   # Method to load graph from OSM file and create +Graph+ and +VisualGraph+ instances from +self.filename+
   #
   # @return [+Graph+, +VisualGraph+]
-  def load_graph()
+  def load_graph
 
     # aux data structures
     hash_of_vertices = {}
@@ -85,25 +85,28 @@ class GraphLoader
     list_of_visual_edges = []
     @neighbor_vertices = {}
 
-
     File.open(@filename, "r") do |file|
       doc = Nokogiri::XML::Document.parse(file)
+      it = 0
+
       doc.root.xpath("way").each do |way|
         highway_tag = way.at_xpath("tag[@k='highway']")
         unless highway_tag.nil?
           if @highway_attributes.include?(highway_tag["v"])
+            p "Processing way ##{it}"
+            it += 1
             nds = way.xpath("nd")
             nds.each_with_index do |nd, i|
               node_id = nd["ref"]
               node = doc.root.at_xpath("node[@id='#{node_id}']")
-
-              ProcessLogger.log("\t Vertex #{node_id} loaded")
+              # ProcessLogger.log("\t Vertex #{node_id} loaded")
 
               unless hash_of_vertices.has_key?(node_id)
-                hash_of_vertices[node_id] = Vertex.new(node_id)
+                v = Vertex.new(node_id)
+                # hash_of_vertices[node_id] = v
 
                 # TODO: Get position from lat and lon
-                # hash_of_visual_vertices[node_id] = VisualVertex.new(node_id, v, node["lat"], node["lon"], pos[1], pos[0])
+                hash_of_visual_vertices[node_id] = VisualVertex.new(node_id, v, node["lat"], node["lon"], node["lat"], node["lon"])
 
               end
               unless i == nds.length - 1
@@ -117,30 +120,61 @@ class GraphLoader
             end
           end
         end
+        way.remove
       end
     end
-    components = []
-		visited_hash = {}
-		index = 0
-    @neighbor_vertices.each do |vertex, neighbors|
-      unless visited_hash[vertex]
-				components[index] = dfs_util(vertex, visited_hash)
-				index += 1
-			end
-    end
-    largest_component = components.max_by { |x| x.length }
-		
+    largest_component = get_largest_component
+
+    # filter only vertices and edges in largest component
+    list_of_edges = list_of_edges.select { |edge| largest_component.include? edge.v1 }
+    hash_of_visual_vertices = hash_of_visual_vertices.select { |k, v| largest_component.include? k }
+    hash_of_vertices = hash_of_visual_vertices.each { |k, v| hash_of_vertices[k] = v.vertex }
+
+    list_of_edges.each { |e| list_of_visual_edges << VisualEdge.new(e, hash_of_visual_vertices[e.v1], hash_of_visual_vertices[e.v2]) }
+
+    # Create Graph instance
+    g = Graph.new(hash_of_vertices, list_of_edges)
+
+    # Create VisualGraph instance
+    bounds = get_bounds(hash_of_visual_vertices)
+    vg = VisualGraph.new(g, hash_of_visual_vertices, list_of_visual_edges, bounds)
+
+    return g, vg
   end
 
   def dfs_util(v, visited_hash)
     visited_hash[v] = true
     component = []
-		component << v
-    # Recur for all the vertices
-    # adjacent to this vertex
+    component << v
+    # Recur for all the vertices adjacent to this vertex
     @neighbor_vertices[v].each do |neighbor|
       component.concat(dfs_util(neighbor, visited_hash)) unless visited_hash[neighbor];
     end
     return component
+  end
+
+  private
+
+  def get_largest_component
+    components = []
+    visited_hash = {}
+    index = 0
+    @neighbor_vertices.each do |vertex, neighbors|
+      unless visited_hash[vertex]
+        components[index] = dfs_util(vertex, visited_hash)
+        index += 1
+      end
+    end
+    largest_component = components.max_by { |x| x.length }
+    return largest_component
+  end
+
+  def get_bounds(hash_of_visual_vertices)
+    bounds = {}
+    bounds[:minlon] = (hash_of_visual_vertices.min_by { |k, v| v.lon })[1].lon
+    bounds[:minlat] = (hash_of_visual_vertices.min_by { |k, v| v.lat })[1].lat
+    bounds[:maxlon] = (hash_of_visual_vertices.max_by { |k, v| v.lon })[1].lon
+    bounds[:maxlat] = (hash_of_visual_vertices.max_by { |k, v| v.lat })[1].lat
+    bounds
   end
 end
