@@ -7,7 +7,7 @@ class OSMSimpleNav
 	# Creates an instance of navigation. No input file is specified in this moment.
 	def initialize
 		# register
-		@load_cmds_list = ['--load']
+		@load_cmds_list = %w(--load --load-comp)
 		@actions_list = ['--export']
 
 		@usage_text = <<-END.gsub(/^ {6}/, '')
@@ -57,6 +57,11 @@ class OSMSimpleNav
 		if @operation == '--export'
 		end
 
+		@only_comp = false
+		if @load_cmd == '--load-comp'
+			@only_comp = true
+		end
+
 		# load output file
 		@out_file = ARGV.shift
 	end
@@ -75,7 +80,7 @@ class OSMSimpleNav
 
 	# Load graph from OSM file. This methods loads graph and create +Graph+ as well as +VisualGraph+ instances.
 	def load_graph
-		graph_loader = GraphLoader.new(@map_file, @highway_attributes)
+		graph_loader = GraphLoader.new(@map_file, @highway_attributes, @only_comp)
 		@graph, @visual_graph = graph_loader.load_graph()
 	end
 

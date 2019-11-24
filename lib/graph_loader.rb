@@ -8,9 +8,10 @@ class GraphLoader
   attr_reader :highway_attributes
 
   # Create an instance, save +filename+ and preset highway attributes
-  def initialize(filename, highway_attributes)
+  def initialize(filename, highway_attributes, only_comp = true)
     @filename = filename
     @highway_attributes = highway_attributes
+    @only_comp = only_comp
   end
 
   # Load graph from Graphviz file which was previously constructed from this application, i.e. contains necessary data.
@@ -123,13 +124,15 @@ class GraphLoader
         way.remove
       end
     end
-    largest_component = get_largest_component
+    if @only_comp
+      largest_component = get_largest_component
 
-    # filter only vertices and edges in largest component
-    list_of_edges = list_of_edges.select { |edge| largest_component.include? edge.v1 }
-    hash_of_visual_vertices = hash_of_visual_vertices.select { |k, v| largest_component.include? k }
-    hash_of_vertices = hash_of_visual_vertices.each { |k, v| hash_of_vertices[k] = v.vertex }
+      # filter only vertices and edges in largest component
+      list_of_edges = list_of_edges.select { |edge| largest_component.include? edge.v1 }
+      hash_of_visual_vertices = hash_of_visual_vertices.select { |k, v| largest_component.include? k }
+      hash_of_vertices = hash_of_visual_vertices.each { |k, v| hash_of_vertices[k] = v.vertex }
 
+    end
     list_of_edges.each { |e| list_of_visual_edges << VisualEdge.new(e, hash_of_visual_vertices[e.v1], hash_of_visual_vertices[e.v2]) }
 
     # Create Graph instance
@@ -177,4 +180,4 @@ class GraphLoader
     bounds[:maxlat] = (hash_of_visual_vertices.max_by { |k, v| v.lat })[1].lat
     bounds
   end
-end
+  end
