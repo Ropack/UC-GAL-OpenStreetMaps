@@ -89,17 +89,22 @@ class GraphLoader
     File.open(@filename, "r") do |file|
       doc = Nokogiri::XML::Document.parse(file)
       it = 0
+      temp_nodes = {}
+      doc.root.xpath("node").each do |node|
+        id = node["id"]
+        temp_nodes[id] = node
+      end
 
       doc.root.xpath("way").each do |way|
         highway_tag = way.at_xpath("tag[@k='highway']")
         unless highway_tag.nil?
           if @highway_attributes.include?(highway_tag["v"])
-            p "Processing way ##{it}"
+            # p "Processing way ##{it}"
             it += 1
             nds = way.xpath("nd")
             nds.each_with_index do |nd, i|
               node_id = nd["ref"]
-              node = doc.root.at_xpath("node[@id='#{node_id}']")
+              node = temp_nodes[node_id]
               # ProcessLogger.log("\t Vertex #{node_id} loaded")
 
               unless hash_of_vertices.has_key?(node_id)
