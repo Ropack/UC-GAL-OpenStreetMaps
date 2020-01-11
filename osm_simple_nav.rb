@@ -11,11 +11,16 @@ class OSMSimpleNav
     @actions_list = %w(--export --show-nodes --midist)
 
     @usage_text = <<-END.gsub(/^ {6}/, '')
-	  	Usage:\truby osm_simple_nav.rb <load_command> <input.IN> <action_command> <output.OUT> 
-	  	\tLoad commands: 
-	  	\t\t --load ... load map from file <input.IN>, IN can be ['DOT']
-	  	\tAction commands: 
-	  	\t\t --export ... export graph into file <output.OUT>, OUT can be ['PDF','PNG','DOT']
+	  	Usage:\truby osm_simple_nav.rb <load_command> <input.IN> <action_command> <action_parameters> 
+	  	 Load commands: 
+	  	\t --load \t\t\t\t\t\t load map from file <input.IN>, IN can be ['DOT']
+	  	 Action commands:
+	  	\t --export <output.OUT> \t\t\t\t\t export graph into file <output.OUT>, OUT can be ['PDF','PNG','DOT']
+	  	\t --show-nodes \t\t\t\t\t\t print all nodes of graph with their coordinates on the screen in format <node_id> : <lat>, <lon>
+	  	\t --show-nodes <node_id1> <node_id2> <output.OUT> \t export graph into file <output.OUT> and highlight node1 and node2, OUT can be ['PDF','PNG','DOT']
+	  	\t --show-nodes <lat1> <lon1> <lat2> <lon2> <output.OUT> \t export graph into file <output.OUT> and highlight nodes nearest the specified coordinates, OUT can be ['PDF','PNG','DOT']
+	  	\t --midist <node_id1> <node_id2> <output.OUT> \t\t export graph into file <output.OUT> and highlight fastest path between node1 and node2, OUT can be ['PDF','PNG','DOT']
+	  	\t --midist <lat1> <lon1> <lat2> <lon2> <output.OUT> \t export graph into file <output.OUT> and highlight fastest path between nodes nearest the specified coordinates, OUT can be ['PDF','PNG','DOT']
     END
   end
 
