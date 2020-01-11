@@ -125,6 +125,10 @@ class OSMSimpleNav
     @graph, @visual_graph = graph_loader.load_graph_viz
   end
 
+  def print_time(time)
+    puts "Travel between chosen points will take approximately %0.2f minutes." % [time]
+  end
+
   # Run navigation according to arguments from command line
   def run
     # prepare log and read command line arguments
@@ -133,7 +137,7 @@ class OSMSimpleNav
 
     # load graph - action depends on last suffix
     #@highway_attributes = ['residential', 'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified']
-    @highway_attributes = ['residential', 'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified']
+    @highway_attributes = ['residential', 'motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'unclassified', 'trunk_link']
     #@highway_attributes = ['residential']
     if file_type(@map_file) == "osm" or file_type(@map_file) == "xml" then
       load_graph
@@ -165,16 +169,18 @@ class OSMSimpleNav
     when '--midist'
       case @sub_operation
       when 'map-exact'
-        @visual_graph.shortest_path_vertices(@node_id_start, @node_id_stop)
+        path, time = @visual_graph.shortest_path_vertices(@node_id_start, @node_id_stop)
         @visual_graph.highlight_path(path)
         @visual_graph.export_graphviz(@out_file)
+        print_time time
       when 'map-nearest'
-        path = @visual_graph.shortest_path_positions(@node_lat_start, @node_lon_start, @node_lat_stop, @node_lon_stop)
+        path, time = @visual_graph.shortest_path_positions(@node_lat_start, @node_lon_start, @node_lat_stop, @node_lon_stop)
         @visual_graph.highlight_path(path)
         id1 = @visual_graph.get_nearest_vertex(@node_lat_start, @node_lon_start)
         id2 = @visual_graph.get_nearest_vertex(@node_lat_stop, @node_lon_stop)
         @visual_graph.highlight_vertices([id1, id2])
         @visual_graph.export_graphviz(@out_file)
+        print_time time
       end
     else
       usage

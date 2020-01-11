@@ -101,7 +101,21 @@ class VisualGraph
   end
 
   def distance_positions(lat1, lon1, lat2, lon2)
-    Math.sqrt((lat1 - lat2) ** 2 + (lon1 - lon2) ** 2)
+    # return Math.sqrt((lat1 - lat2) ** 2 + (lon1 - lon2) ** 2)
+    r = 6371e3 # metres
+    lat1rad = to_rad lat1
+    lat2rad = to_rad lat2
+    lon1rad = to_rad lon1
+    lon2rad = to_rad lon2
+    delta_lat = lat1rad - lat2rad
+    delta_lon = lon1rad - lon2rad
+    x = delta_lon * Math.cos((lat1rad+lat2rad)/2)
+    y = delta_lat
+    Math.sqrt(x ** 2 + y ** 2) * r
+  end
+
+  def to_rad(deg)
+    deg * Math::PI / 180
   end
 
   def distance_vertices(v1_id, v2_id)
@@ -110,8 +124,9 @@ class VisualGraph
     distance_positions(v1.lat.to_f, v1.lon.to_f, v2.lat.to_f, v2.lon.to_f)
   end
 
+  # actually time of travel in minutes
   def distance_with_speed(v1_id, v2_id, max_speed)
-    return distance_vertices(v1_id, v2_id) / max_speed
+    return distance_vertices(v1_id, v2_id) / max_speed * 0.06
   end
 
   def shortest_path_vertices(v1_id, v2_id)
@@ -122,43 +137,6 @@ class VisualGraph
     v1_id = get_nearest_vertex(lat1, lon1)
     v2_id = get_nearest_vertex(lat2, lon2)
     shortest_path_vertices(v1_id, v2_id)
-  end
-
-  def dijkstra_gv_impl(v1_id, v2_id)
-    # create GraphViz object from ruby-graphviz package
-    graph_viz_output = GraphViz.new(:G,
-                                    use: :neato,
-                                    truecolor: true,
-                                    inputscale: @scale,
-                                    margin: 0,
-                                    bb: "#{@bounds[:minlon]},#{@bounds[:minlat]},
-                                  		    #{@bounds[:maxlon]},#{@bounds[:maxlat]}",
-                                    outputorder: :nodesfirst)
-
-    # append all vertices
-    @visual_vertices.each { |k, v|
-      graph_viz_output.add_nodes(v.id, :shape => 'point',
-                                 :comment => "#{v.lat},#{v.lon}!",
-                                 :pos => "#{v.y},#{v.x}!")
-    }
-
-    # append all edges
-    @visual_edges.each { |edge|
-      graph_viz_output.add_edges(edge.v1.id, edge.v2.id, 'arrowhead' => 'none')
-    }
-    r = GraphViz::Theory.new(graph_viz_output).moore_dijkstra(v1, v2)
-    if r.nil?
-      puts "No way !"
-    else
-      #print "\tPath : ";
-      puts r
-      puts "\tDistance : #{r[:distance]}"
-      graph_viz_output.each_edge do |e|
-        if e.node_one.id == r
-
-        end
-      end
-    end
   end
 
   def dijkstra(v1_id, v2_id)
@@ -179,7 +157,7 @@ class VisualGraph
       active.each do |a|
         deleted = unvisited.delete(a)
         if(deleted == v2_id)
-          return create_path(v1_id, v2_id, predecessors)
+          return [create_path(v1_id, v2_id, predecessors), distances[v2_id]]
         end
 
         neighbors[a].select { |n| unvisited.include? n[:id] }.each do |neighbor|

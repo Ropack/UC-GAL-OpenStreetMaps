@@ -102,6 +102,10 @@ class GraphLoader
             # p "Processing way ##{it}"
             it += 1
             nds = way.xpath("nd")
+            speed_tag = way.at_xpath("tag[@k='maxspeed']")
+            max_speed = 50
+            max_speed = speed_tag["v"].to_f unless speed_tag.nil?
+
             nds.each_with_index do |nd, i|
               node_id = nd["ref"]
               node = temp_nodes[node_id]
@@ -117,7 +121,7 @@ class GraphLoader
               end
               unless i == nds.length - 1
                 node2_id = nds[i + 1]["ref"]
-                list_of_edges << Edge.new(node_id, node2_id, 50, false)
+                list_of_edges << Edge.new(node_id, node2_id, max_speed, false)
                 @neighbor_vertices[node_id] = [] unless @neighbor_vertices.has_key? node_id
                 @neighbor_vertices[node2_id] = [] unless @neighbor_vertices.has_key? node2_id
                 @neighbor_vertices[node_id] << node2_id
